@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Project Odyssey: AI Safety Agent DEMO</title>
+    <title>Project Odyssey v2: Interactive Map DEMO</title>
     
     <!-- External Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
@@ -11,6 +11,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Leaflet.js Library -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
     <style>
         :root {
@@ -24,7 +28,6 @@
             --warning-color: #f39c12;
             --danger-color: #e74c3c;
         }
-
         body {
             font-family: var(--font-family-main);
             background-color: var(--bg-color);
@@ -35,7 +38,6 @@
             flex-direction: column;
             align-items: center;
         }
-
         .container {
             width: 100%;
             max-width: 1400px;
@@ -47,17 +49,12 @@
                 "header header"
                 "main sidebar";
         }
-
         @media (max-width: 1024px) {
             .container {
                 grid-template-columns: 1fr;
-                grid-template-areas:
-                    "header"
-                    "main"
-                    "sidebar";
+                grid-template-areas: "header" "main" "sidebar";
             }
         }
-
         .header {
             grid-area: header;
             background-color: var(--primary-color);
@@ -66,38 +63,30 @@
             text-align: center;
             border: 1px solid var(--secondary-color);
         }
-
         .header h1 {
             margin: 0;
             color: white;
             font-size: 2.5em;
             letter-spacing: 2px;
         }
-        
-        .header h1 .icon {
-            color: var(--accent-color);
-        }
-
+        .header h1 .icon { color: var(--accent-color); }
         .header p {
             margin: 10px 0 0;
             font-size: 1.1em;
             color: var(--text-color);
         }
-        
         .main-content {
             grid-area: main;
             display: grid;
             grid-template-rows: 2fr 1fr;
             gap: 20px;
         }
-
         .sidebar {
             grid-area: sidebar;
             display: flex;
             flex-direction: column;
             gap: 20px;
         }
-
         .card {
             background-color: var(--primary-color);
             border-radius: 8px;
@@ -107,7 +96,6 @@
             display: flex;
             flex-direction: column;
         }
-        
         .card-header {
             margin-bottom: 15px;
             padding-bottom: 10px;
@@ -118,65 +106,25 @@
             display: flex;
             align-items: center;
         }
-
         .card-header i {
             margin-right: 10px;
             color: var(--accent-color);
         }
-
-        .cctv-feed {
+        /* Map container style */
+        #map {
             width: 100%;
             height: 100%;
-            background-color: #000;
             border-radius: 4px;
-            position: relative;
-            overflow: hidden;
             min-height: 400px;
+            background-color: #000;
         }
-
-        .cctv-feed img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        
-        .overlay-text {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            background-color: rgba(0,0,0,0.6);
+        .leaflet-container { background: var(--primary-color); }
+        .custom-icon {
+            text-align: center;
             color: white;
-            padding: 5px 10px;
-            border-radius: 4px;
-            font-size: 0.9em;
+            font-size: 20px;
         }
-
-        .bounding-box {
-            position: absolute;
-            border: 2px solid;
-            background-color: rgba(255, 255, 255, 0.1);
-            display: none;
-        }
-
-        .bounding-box.warning { border-color: var(--warning-color); }
-        .bounding-box.danger { border-color: var(--danger-color); }
-        .bounding-box-label {
-            position: absolute;
-            top: -24px;
-            left: -2px;
-            color: white;
-            padding: 2px 5px;
-            font-size: 0.8em;
-            white-space: nowrap;
-        }
-        .bounding-box-label.warning { background-color: var(--warning-color); }
-        .bounding-box-label.danger { background-color: var(--danger-color); }
-
-
-        #audio-chart {
-            flex-grow: 1;
-        }
-
+        #audio-chart { flex-grow: 1; }
         .log-container {
             background-color: #111;
             border-radius: 4px;
@@ -187,72 +135,21 @@
             font-size: 0.9em;
             flex-grow: 1;
         }
-
-        .log-entry {
-            margin-bottom: 8px;
-            display: flex;
-            line-height: 1.4;
-        }
-        
-        .log-entry .timestamp {
-            color: #888;
-            margin-right: 10px;
-            flex-shrink: 0;
-        }
-        
-        .log-entry .level {
-            font-weight: bold;
-            margin-right: 10px;
-            flex-shrink: 0;
-        }
-        
+        .log-entry { margin-bottom: 8px; display: flex; line-height: 1.4; }
+        .log-entry .timestamp { color: #888; margin-right: 10px; flex-shrink: 0; }
+        .log-entry .level { font-weight: bold; margin-right: 10px; flex-shrink: 0; }
         .log-entry .level-INFO { color: #3498db; }
         .log-entry .level-WARN { color: var(--warning-color); }
         .log-entry .level-CRITICAL { color: var(--danger-color); animation: blink 1s infinite; }
-        
-        @keyframes blink {
-            50% { opacity: 0.5; }
-        }
-
-        .log-entry .message {
-            flex-grow: 1;
-            word-break: break-all;
-        }
-
-        .status-panel {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .status-item {
-            background-color: var(--secondary-color);
-            padding: 15px;
-            border-radius: 6px;
-        }
-        
-        .status-item-title {
-            font-size: 1em;
-            font-weight: 500;
-            margin-bottom: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .status-value {
-            font-size: 1.8em;
-            font-weight: bold;
-            text-align: right;
-        }
-        
+        @keyframes blink { 50% { opacity: 0.5; } }
+        .log-entry .message { flex-grow: 1; word-break: break-all; }
+        .status-panel { display: flex; flex-direction: column; gap: 15px; }
+        .status-item { background-color: var(--secondary-color); padding: 15px; border-radius: 6px; }
+        .status-item-title { font-size: 1em; font-weight: 500; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .status-value { font-size: 1.8em; font-weight: bold; text-align: right; }
         #system-status-value { color: var(--success-color); }
         #threat-level-value { color: var(--success-color); }
-
-        .controls {
-            text-align: center;
-        }
-
+        .controls { text-align: center; }
         .btn-start {
             background-color: var(--accent-color);
             color: white;
@@ -264,53 +161,32 @@
             transition: all 0.3s ease;
             font-weight: bold;
         }
-        
-        .btn-start:hover {
-            background-color: #ff6b81;
-            box-shadow: 0 0 15px rgba(233, 69, 96, 0.5);
-        }
-        
-        .btn-start:disabled {
-            background-color: #555;
-            cursor: not-allowed;
-        }
-
+        .btn-start:hover { background-color: #ff6b81; box-shadow: 0 0 15px rgba(233, 69, 96, 0.5); }
+        .btn-start:disabled { background-color: #555; cursor: not-allowed; }
     </style>
 </head>
 <body>
-
     <div class="container">
         <header class="header">
-            <h1><i class="fa-solid fa-shield-halved icon"></i> Project Odyssey: AI Safety Agent</h1>
-            <p>Real-time Multimodal AI for Proactive Industrial Accident Prevention</p>
+            <h1><i class="fa-solid fa-shield-halved icon"></i> Project Odyssey: AI Safety Agent v2</h1>
+            <p>Interactive Map Demo - Real-time Multimodal AI for Proactive Industrial Accident Prevention</p>
         </header>
 
         <main class="main-content">
             <div class="card">
-                <div class="card-header"><i class="fa-solid fa-video"></i>CCTV Feed - Zone 3B (Press Machine)</div>
-                <div class="cctv-feed">
-                    <img src="https://i.imgur.com/k2x22V3.png" alt="CCTV of a factory floor">
-                    <div class="overlay-text">CAM-04 | 2025-07-21 14:32:15</div>
-                    <div id="box1" class="bounding-box">
-                        <div id="box1-label" class="bounding-box-label"></div>
-                    </div>
-                    <div id="box2" class="bounding-box">
-                        <div id="box2-label" class="bounding-box-label"></div>
-                    </div>
-                </div>
+                <div class="card-header"><i class="fa-solid fa-map-location-dot"></i>Live Map - Zone 3B (Seokchon Intersection)</div>
+                <div id="map"></div>
             </div>
             <div class="card">
                 <div class="card-header"><i class="fa-solid fa-waveform"></i>Real-time Audio Analysis (dB)</div>
                 <div id="audio-chart"></div>
             </div>
         </main>
-
+        
         <aside class="sidebar">
             <div class="card">
                 <div class="card-header"><i class="fa-solid fa-terminal"></i>Odyssey AI Analysis Log</div>
-                <div id="log-container" class="log-container">
-                    <!-- Logs will be dynamically inserted here -->
-                </div>
+                <div id="log-container" class="log-container"></div>
             </div>
             <div class="card">
                 <div class="card-header"><i class="fa-solid fa-gauge-high"></i>System Status</div>
@@ -326,211 +202,90 @@
                 </div>
             </div>
             <div class="card controls">
-                <button id="start-demo-btn" class="btn-start">
-                    <i class="fa-solid fa-play"></i> Start Danger Scenario
-                </button>
+                <button id="start-demo-btn" class="btn-start"><i class="fa-solid fa-play"></i> Start Danger Scenario</button>
             </div>
         </aside>
     </div>
 
     <script>
-        // --- ApexCharts Configuration ---
-        var options = {
-            chart: {
-                height: '100%',
-                type: 'line',
-                animations: {
-                    enabled: true,
-                    easing: 'linear',
-                    dynamicAnimation: {
-                        speed: 1000
-                    }
-                },
-                toolbar: { show: false },
-                zoom: { enabled: false },
-                foreColor: 'var(--text-color)'
-            },
-            dataLabels: { enabled: false },
-            stroke: { curve: 'smooth', width: 3 },
-            markers: { size: 0 },
-            xaxis: {
-                type: 'datetime',
-                range: 60000, // 1 minute window
-                labels: { format: 'HH:mm:ss' }
-            },
-            yaxis: {
-                max: 120,
-                min: 0,
-                title: { text: 'Decibels (dB)' }
-            },
-            series: [{ name: 'Machine Noise', data: [] }],
-            theme: { mode: 'dark' },
-            tooltip: { theme: 'dark' },
-            grid: {
-                borderColor: '#535A6C33'
-            },
-            colors: ['#008FFB']
-        };
+        // --- Map Initialization ---
+        const map = L.map('map').setView([37.5055, 127.1085], 17); // Seokchon Station Intersection
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors © <a href="https://carto.com/attributions">CARTO</a>',
+            subdomains: 'abcd',
+            maxZoom: 20
+        }).addTo(map);
 
+        // --- Map Icons & Elements ---
+        const createIcon = (iconName, color) => L.divIcon({
+            html: `<i class="fa-solid ${iconName}" style="color: ${color}; font-size: 24px; text-shadow: 0 0 5px black;"></i>`,
+            className: 'custom-icon',
+            iconSize: [24, 24],
+            iconAnchor: [12, 12]
+        });
+
+        const cctvIcon = createIcon('fa-video', '#00a8ff');
+        const workerWarnIcon = createIcon('fa-person-walking', 'var(--warning-color)');
+        const workerDangerIcon = createIcon('fa-person-running', 'var(--danger-color)');
+        const machineWarnIcon = createIcon('fa-gear', 'var(--warning-color)');
+        const machineDangerIcon = createIcon('fa-gear', 'var(--danger-color)');
+
+        const cctvMarker = L.marker([37.5065, 127.1080], { icon: cctvIcon }).addTo(map).bindTooltip("CCTV CAM-04");
+        const viewPolygon = L.polygon([
+            [37.5065, 127.1080],
+            [37.5045, 127.1070],
+            [37.5045, 127.1090]
+        ], { color: '#00a8ff', weight: 1, opacity: 0.5, fillOpacity: 0.1 }).addTo(map);
+
+        const machineLocation = [37.5050, 127.1075];
+        const workerStartLocation = [37.5058, 127.1082];
+        let workerMarker, machineMarker;
+
+        // --- ApexCharts Configuration --- (Same as before)
+        var options = { chart: { height: '100%', type: 'line', animations: { enabled: true, easing: 'linear', dynamicAnimation: { speed: 1000 }}, toolbar: { show: false }, zoom: { enabled: false }, foreColor: 'var(--text-color)'}, dataLabels: { enabled: false }, stroke: { curve: 'smooth', width: 3 }, markers: { size: 0 }, xaxis: { type: 'datetime', range: 60000, labels: { format: 'HH:mm:ss' }}, yaxis: { max: 120, min: 0, title: { text: 'Decibels (dB)' }}, series: [{ name: 'Machine Noise', data: [] }], theme: { mode: 'dark' }, tooltip: { theme: 'dark' }, grid: { borderColor: '#535A6C33' }, colors: ['#008FFB']};
         var chart = new ApexCharts(document.querySelector("#audio-chart"), options);
         chart.render();
 
-        // --- Demo State & Elements ---
+        // --- Demo State & Elements --- (Same as before)
         const logContainer = document.getElementById('log-container');
         const startBtn = document.getElementById('start-demo-btn');
         const systemStatusEl = document.getElementById('system-status-value');
         const threatLevelEl = document.getElementById('threat-level-value');
-        const box1 = document.getElementById('box1');
-        const box1Label = document.getElementById('box1-label');
-        const box2 = document.getElementById('box2');
-        const box2Label = document.getElementById('box2-label');
-
         let data = [];
         let demoInterval;
-        let logCounter = 0;
-
-        // --- Helper Functions ---
-        function getNewData(baseval, yrange) {
-            var newDate = new Date().getTime();
-            var newval = Math.floor(Math.random() * (yrange.max - yrange.min + 1)) + yrange.min;
-            data.push({ x: newDate, y: newval });
-            if (data.length > 50) {
-                data.shift();
-            }
-            return data;
-        }
-
-        function addLog(level, message) {
-            const now = new Date();
-            const timestamp = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
-            const logEntry = document.createElement('div');
-            logEntry.classList.add('log-entry');
-            logEntry.innerHTML = `
-                <span class="timestamp">${timestamp}</span>
-                <span class="level level-${level}">${level}</span>
-                <span class="message">${message}</span>
-            `;
-            logContainer.appendChild(logEntry);
-            logContainer.scrollTop = logContainer.scrollHeight;
-        }
         
-        function setBoundingBox(el, labelEl, options) {
-            if (!options.show) {
-                el.style.display = 'none';
-                return;
-            }
-            el.style.display = 'block';
-            el.style.left = options.x + '%';
-            el.style.top = options.y + '%';
-            el.style.width = options.w + '%';
-            el.style.height = options.h + '%';
-            
-            el.className = 'bounding-box';
-            el.classList.add(options.type);
-            labelEl.className = 'bounding-box-label';
-            labelEl.classList.add(options.type);
-            labelEl.innerText = options.label;
-        }
-        
-        function updateThreatLevel(level, color) {
-            threatLevelEl.innerText = level;
-            threatLevelEl.style.color = color;
-        }
+        // --- Helper Functions --- (Slightly modified)
+        function addLog(level, message) { const now = new Date(); const timestamp = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`; const logEntry = document.createElement('div'); logEntry.classList.add('log-entry'); logEntry.innerHTML = `<span class="timestamp">${timestamp}</span><span class="level level-${level}">${level}</span><span class="message">${message}</span>`; logContainer.appendChild(logEntry); logContainer.scrollTop = logContainer.scrollHeight;}
+        function getNewData(baseval, yrange) { var newDate = new Date().getTime(); var newval = Math.floor(Math.random() * (yrange.max - yrange.min + 1)) + yrange.min; data.push({ x: newDate, y: newval }); if (data.length > 50) { data.shift(); } return data;}
+        function updateThreatLevel(level, color) { threatLevelEl.innerText = level; threatLevelEl.style.color = color; }
 
         function resetDemo() {
             clearInterval(demoInterval);
+            if (workerMarker) map.removeLayer(workerMarker);
+            if (machineMarker) map.removeLayer(machineMarker);
             data = [];
             logContainer.innerHTML = '';
             startBtn.disabled = false;
             startBtn.innerHTML = '<i class="fa-solid fa-play"></i> Start Danger Scenario';
             updateThreatLevel('LOW', 'var(--success-color)');
-            setBoundingBox(box1, box1Label, {show: false});
-            setBoundingBox(box2, box2Label, {show: false});
             addLog('INFO', 'System standby. Awaiting scenario start.');
             runNormalSimulation();
         }
 
-
         // --- Simulation Logic ---
-        function runNormalSimulation() {
-            demoInterval = setInterval(() => {
-                chart.updateSeries([{ data: getNewData(50, { min: 40, max: 60 }) }]);
-            }, 1000);
-        }
+        function runNormalSimulation() { demoInterval = setInterval(() => { chart.updateSeries([{ data: getNewData(50, { min: 40, max: 60 }) }]); }, 1000); }
 
-        // --- Scenario Steps ---
+        // --- Scenario Steps (V2 with Map integration) ---
         const scenario = [
-            // 1. Worker without helmet appears
-            {
-                time: 2000,
-                action: () => {
-                    addLog('INFO', '[Vision] Human detected in Zone 3B.');
-                    setBoundingBox(box1, box1Label, {show: true, x: 55, y: 30, w: 15, h: 60, type: 'warning', label: 'Person Detected'});
-                }
-            },
-            {
-                time: 3000,
-                action: () => {
-                    addLog('WARN', '[Vision] Worker safety helmet not detected.');
-                    updateThreatLevel('MEDIUM', 'var(--warning-color)');
-                    setBoundingBox(box1, box1Label, {show: true, x: 55, y: 30, w: 15, h: 60, type: 'warning', label: 'WARN: No Helmet'});
-                }
-            },
-            // 2. Machine starts making abnormal noise
-            {
-                time: 5000,
-                action: () => {
-                    addLog('INFO', '[Audio] Machine noise level increasing.');
-                    clearInterval(demoInterval);
-                    demoInterval = setInterval(() => {
-                        chart.updateSeries([{ data: getNewData(80, { min: 75, max: 90 }) }]);
-                    }, 1000);
-                }
-            },
-            {
-                time: 7000,
-                action: () => {
-                    addLog('WARN', '[Audio] Abnormal high-frequency sound detected from press machine.');
-                    setBoundingBox(box2, box2Label, {show: true, x: 10, y: 40, w: 35, h: 45, type: 'warning', label: 'WARN: Abnormal Noise'});
-                }
-            },
-            // 3. CRITICAL: Worker approaches the faulty machine
-            {
-                time: 9000,
-                action: () => {
-                    addLog('INFO', '[Vision] Worker moving towards press machine.');
-                    // Animate the box
-                    box1.style.transition = 'all 2s linear';
-                    box1.style.left = '40%';
-                }
-            },
-            {
-                time: 11000,
-                action: () => {
-                    addLog('CRITICAL', '[Multimodal Fusion] CRITICAL ALERT! Unprotected worker approaching malfunctioning equipment!');
-                    updateThreatLevel('CRITICAL', 'var(--danger-color)');
-                     setBoundingBox(box1, box1Label, {show: true, x: 40, y: 30, w: 15, h: 60, type: 'danger', label: 'CRITICAL DANGER'});
-                     setBoundingBox(box2, box2Label, {show: true, x: 10, y: 40, w: 35, h: 45, type: 'danger', label: 'EQUIPMENT FAILURE'});
-                }
-            },
-            {
-                time: 12000,
-                action: () => {
-                     addLog('INFO', '[Action] Automatic alert sent to manager. Emergency stop signal sent to press machine.');
-                }
-            },
-             {
-                time: 15000,
-                action: () => {
-                     addLog('INFO', 'Scenario complete. System resetting in 5 seconds.');
-                }
-            },
-            {
-                time: 20000,
-                action: () => {
-                     resetDemo();
-                }
-            }
+            { time: 2000, action: () => { addLog('INFO', '[Vision] Human detected in Zone 3B.'); workerMarker = L.marker(workerStartLocation, { icon: workerWarnIcon }).addTo(map).bindTooltip("Person Detected"); }},
+            { time: 3000, action: () => { addLog('WARN', '[Vision] Worker safety helmet not detected.'); updateThreatLevel('MEDIUM', 'var(--warning-color)'); workerMarker.bindTooltip("WARN: No Helmet").openTooltip(); }},
+            { time: 5000, action: () => { addLog('INFO', '[Audio] Machine noise level increasing.'); clearInterval(demoInterval); demoInterval = setInterval(() => { chart.updateSeries([{ data: getNewData(80, { min: 75, max: 90 }) }]); }, 1000); }},
+            { time: 7000, action: () => { addLog('WARN', '[Audio] Abnormal high-frequency sound detected from press machine.'); machineMarker = L.marker(machineLocation, { icon: machineWarnIcon }).addTo(map).bindTooltip("WARN: Abnormal Noise").openTooltip(); }},
+            { time: 9000, action: () => { addLog('INFO', '[Vision] Worker moving towards press machine.'); workerMarker.setLatLng(machineLocation); }},
+            { time: 11000, action: () => { addLog('CRITICAL', '[Multimodal Fusion] CRITICAL ALERT! Unprotected worker approaching malfunctioning equipment!'); updateThreatLevel('CRITICAL', 'var(--danger-color)'); workerMarker.setIcon(workerDangerIcon).bindTooltip("CRITICAL DANGER").openTooltip(); machineMarker.setIcon(machineDangerIcon).bindTooltip("EQUIPMENT FAILURE").openTooltip(); }},
+            { time: 12000, action: () => { addLog('INFO', '[Action] Automatic alert sent to manager. Emergency stop signal sent to press machine.'); }},
+            { time: 15000, action: () => { addLog('INFO', 'Scenario complete. System resetting in 5 seconds.'); }},
+            { time: 20000, action: () => { resetDemo(); }}
         ];
 
         // --- Event Listener ---
@@ -539,17 +294,11 @@
             startBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Scenario Running...';
             logContainer.innerHTML = '';
             addLog('INFO', 'Danger scenario sequence initiated...');
-            
-            box1.style.transition = ''; // Reset animation
-            
-            scenario.forEach(step => {
-                setTimeout(step.action, step.time);
-            });
+            scenario.forEach(step => setTimeout(step.action, step.time));
         });
         
         // --- Initial State ---
         resetDemo();
-
     </script>
 </body>
 </html>
