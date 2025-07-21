@@ -13,6 +13,7 @@
 ---
 
 ## ✨ 인터랙티브 데모 페이지
+<img width="1552" height="978" alt="image" src="https://github.com/user-attachments/assets/498e93a7-ed0b-4648-aa20-5e794d70cfb2" />
 
 > **백 마디 설명보다 한 번의 경험이 더 중요합니다. 아래 링크를 통해 '프로젝트 오디세이'가 어떻게 작동하는지 직접 확인해보십시오.**
 
